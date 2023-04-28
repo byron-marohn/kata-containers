@@ -12,6 +12,35 @@ use thiserror::Error;
 pub struct KataCtlCli {
     #[clap(subcommand)]
     pub command: Commands,
+    #[clap(short, long, arg_enum)]
+    /// Sets the minimum log level required for log messages to be displayed. Default is 'info'
+    pub log_level: Option<LevelWrapper>,
+    #[clap(short, long, action)]
+    /// If enabled, log messages will be JSON formatted for easier machine parsing
+    pub json_logging: bool,
+}
+
+#[derive(clap::ArgEnum, Clone, Debug)]
+pub enum LevelWrapper {
+   Trace,
+   Debug,
+   Info,
+   Warning,
+   Error,
+   Critical
+}
+
+impl LevelWrapper {
+    pub fn get_slog_level(&self) -> slog::Level {
+        match self {
+            LevelWrapper::Trace => slog::Level::Trace,
+            LevelWrapper::Debug => slog::Level::Debug,
+            LevelWrapper::Info => slog::Level::Info,
+            LevelWrapper::Warning => slog::Level::Warning,
+            LevelWrapper::Error => slog::Level::Error,
+            LevelWrapper::Critical => slog::Level::Critical,
+        }
+    }
 }
 
 #[derive(Debug, Subcommand)]

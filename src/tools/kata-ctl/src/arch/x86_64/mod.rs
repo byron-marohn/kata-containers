@@ -16,6 +16,7 @@ mod arch_specific {
     use nix::unistd::Uid;
     use std::fs;
     use std::path::Path;
+    use slog::{info, o, warn};
 
     const CPUINFO_DELIMITER: &str = "\nprocessor";
     const CPUINFO_FLAGS_TAG: &str = "flags";
@@ -25,6 +26,12 @@ mod arch_specific {
 
     pub const ARCH_CPU_VENDOR_FIELD: &str = check::GENERIC_CPU_VENDOR_FIELD;
     pub const ARCH_CPU_MODEL_FIELD: &str = check::GENERIC_CPU_MODEL_FIELD;
+
+    macro_rules! sl {
+         () => {
+             slog_scope::logger().new(o!("subsystem" => "x86_64"))
+         };
+    }
 
     // List of check functions
     static CHECK_LIST: &[CheckItem] = &[
@@ -65,7 +72,7 @@ mod arch_specific {
 
     // check cpu
     fn check_cpu(_args: &str) -> Result<()> {
-        println!("INFO: check CPU: x86_64");
+        info!(sl!(), "check CPU: x86_64");
 
         let cpu_info = check::get_single_cpu_info(check::PROC_CPUINFO, CPUINFO_DELIMITER)?;
 
@@ -82,14 +89,14 @@ mod arch_specific {
         // TODO: Add more information to output (see kata-check in go tool); adjust formatting
         let missing_cpu_attributes = check::check_cpu_attribs(&cpu_info, CPU_ATTRIBS_INTEL)?;
         if !missing_cpu_attributes.is_empty() {
-            eprintln!(
-                "WARNING: Missing CPU attributes {:?}",
+            warn!(sl!(),
+                "Missing CPU attributes {:?}",
                 missing_cpu_attributes
             );
         }
         let missing_cpu_flags = check::check_cpu_flags(&cpu_flags, CPU_FLAGS_INTEL)?;
         if !missing_cpu_flags.is_empty() {
-            eprintln!("WARNING: Missing CPU flags {:?}", missing_cpu_flags);
+            warn!(sl!(), "Missing CPU flags {:?}", missing_cpu_flags);
         }
 
         Ok(())
@@ -255,7 +262,7 @@ mod arch_specific {
     }
 
     fn check_kernel_modules(_args: &str) -> Result<()> {
-        println!("INFO: check kernel modules for: x86_64");
+        info!(sl!(), "check kernel modules for: x86_64");
 
         for module in MODULE_LIST {
             let module_loaded =
@@ -276,7 +283,7 @@ mod arch_specific {
                     }
                 }
                 Err(err) => {
-                    eprintln!("WARNING {:}", err.replace('\n', ""))
+                    warn!(sl!(), "{:}", err.replace('\n', ""))
                 }
             }
         }

@@ -18,6 +18,12 @@ mod arch_specific {
     #[allow(dead_code)]
     pub const ARCH_CPU_MODEL_FIELD: &str = "CPU architecture";
 
+    macro_rules! sl {
+        () => {
+            slog_scope::logger().new(o!("subsystem" => "aarch64"))
+        };
+    }
+
     // List of check functions
     static CHECK_LIST: &[CheckItem] = &[CheckItem {
         name: CheckType::Cpu,
@@ -27,11 +33,11 @@ mod arch_specific {
     }];
 
     pub fn check(_args: &str) -> Result<()> {
-        println!("INFO: check: aarch64");
+        info!(sl!(), "check: aarch64");
         if Path::new(KVM_DEV).exists() {
             println!("Kata Containers can run on this host\n");
         } else {
-            eprintln!("WARNING: Kata Containers can't run on this host as lack of virtulization support\n");
+            warn!(sl!(), "Kata Containers can't run on this host as lack of virtulization support\n");
         }
 
         Ok(())
